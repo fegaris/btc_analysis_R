@@ -82,7 +82,7 @@ Vamos a observar la evolución que ha tenido el bitcoin mes a mes desde que se a
 ```{r}
 evolution <- binance_klines('BTCUSDT', interval = '1M')
 
-evolution %>% ggplot(aes(close_time, close)) + geom_line()
+evolution %>% ggplot(aes(close_time, close)) + geom_line() +xlab("Time in month") + ylab("Price $") + ggtitle("BTC Price Evolution")
 
 ```
 Como podemos observar el bitcoin sigue rachas en las que aumenta su valor y otras en las lo pierde. Todo esto pasa en cuestión de pocos meses ya que bitcoin es un activo bastante volatil
@@ -95,7 +95,7 @@ Si comparamos el precio del bitcoin en los días 29-31 de enero:
 ```{r}
 klines <- binance_klines('BTCUSDT', interval = '15m',  start_time = as.Date('2022-01-28'), end_time = as.Date('2022-01-31'))
 klines <- klines %>% mutate(day = format(close_time, format="%d"))
-klines %>% ggplot(aes(format(close_time, format='%H%M'), close, colour=day, group=day )) + geom_line()
+klines %>% ggplot(aes(format(close_time, format='%H%M'), close, colour=day, group=day )) + geom_line() +xlab("Time in quarter") + ylab("Price $") + ggtitle("BTC Price Evolution")
 ```
 Podemos ver que su valor ha variado en más de 2k dolares, un 5% de su valor
 
@@ -105,13 +105,13 @@ Podemos ver que su valor ha variado en más de 2k dolares, un 5% de su valor
 ## Volumen del bitcoin en su historia
 Un dato intenresante que tambien podemos observar es el volumen de Bitcoin. Esto es la cantidad de operadores de compra-venta de una moneda en un marco de tiempo
 ```{r}
-evolution %>% ggplot(aes(close_time, close))+ geom_line(aes(y = volume))
+evolution %>% ggplot(aes(close_time, close))+ geom_line(aes(y = volume)) +xlab("Time in month") + ylab("Volume") + ggtitle("BTC Volume Evolution")
 ```
 
 
 ## Volumen del BTC en los últimos días
 ```{r}
-klines %>% ggplot(aes(close_time, volume))+ geom_line()
+klines %>% ggplot(aes(close_time, volume))+ geom_line() +xlab("Time in quarter") + ylab("Volume") + ggtitle("BTC Volume Evolution")
 
 ```
 
@@ -121,7 +121,7 @@ klines %>% ggplot(aes(close_time, volume))+ geom_line()
 ## Patron volumen y precio en la historia del BTC
 El volumen podría predecir el valor del btc. Para ello vamos a comparar el volumen que hay contra el precio que tiene el BTC
 ```{r}
-evolution %>% ggplot(aes(close_time, close)) + geom_line(aes(y = close)) + geom_col(aes(y = volume/100), alpha=0.2) + scale_y_continuous("Price ($)", sec.axis = sec_axis(~ . * 100, name = "Volumen"))
+evolution %>% ggplot(aes(close_time, close)) + geom_line(aes(y = close)) + geom_col(aes(y = volume/100), alpha=0.2) + scale_y_continuous("Price ($)", sec.axis = sec_axis(~ . * 100, name = "Volumen")) + ggtitle("BTC Volume vs Price")
 ```
 Como podemos observar no hay un patrón evidente entre el volumen y el precio. Si que hay algunas fechas en las que parece que lo puede predecir, pero si observamos el resto de la gráfica no parece coincidir.
 
@@ -132,8 +132,8 @@ Como podemos observar no hay un patrón evidente entre el volumen y el precio. S
 La grafica anterior representa toda la evolución del BTC y el volumen de transacciones. Pero todavía podriamos pensar que el volumen puede predecir el valor a corto plazo 
 
 ```{r}
-klines %>% ggplot(aes(close_time, close)) + geom_line()
-klines %>% ggplot(aes(close_time, volume)) + geom_line()
+klines %>% ggplot(aes(close_time, close)) + geom_line() +xlab("Time in quarter") + ylab("Price $") + ggtitle("BTC Price Evolution")
+klines %>% ggplot(aes(close_time, volume)) + geom_line() +xlab("Time in quarter") + ylab("Volume") + ggtitle("BTC Volume Evolution")
 ```
 Aparentemente no hay una relacion clara entre el volumen de las transacciones y el precio del btc
 
