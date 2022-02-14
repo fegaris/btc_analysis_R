@@ -1,0 +1,175 @@
+---
+title: "Practica15"
+output: html_document
+author: Ismael
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+# 1. Ejemplos con pageviews. 25 % calif.
+
+https://rdrr.io/cran/pageviews/
+
+## 1.1 Haciendo uso del cliente API pageviews de R, descarga los datos y crea un data frame con los 100 artículos de wikipedia con más visualizaciones en lo que va de año.
+```{r}
+library(pageviews)
+top_100_articles <- head(top_articles(start = as.Date('2022-01-01')), 100)
+head(top_100_articles)
+```
+
+
+
+
+
+## 1.2 Busca el artículo “Cristiano_Ronaldo” en el proyecto “es.wikipedia”. Guarda un data frame con el número de visualizaciones mensuales en la wikipedia española desde 2010 hasta hoy.
+```{r}
+library(tidyverse)
+# Solo puedo buscar a partir del 2015-10-01
+
+cr7 <- article_pageviews(project = "es.wikipedia", article = "Cristiano_Ronaldo", granularity = "monthly", start = "2015100100", end = "2022013100") %>% select(date, views)
+head(cr7)
+```
+
+
+
+
+## 1.3 Repite el ejercicio con el artículo “Lionel_Messi”.
+```{r}
+# Solo puedo buscar a partir del 2015-10-01
+
+messi <- article_pageviews(project = "es.wikipedia", article = "Lionel_Messi", granularity = "monthly", start = "2015100100", end = "2022013100") %>% select(date, views)
+head(messi)
+```
+  
+
+## 1.4 Une ambos data frames y realiza una visualización atractiva con ggplot2 donde se pueda comparar la tendencia con ambos deportistas.
+
+```{r}
+library(tidyverse)
+
+cr7 <- cr7 %>% mutate(name = "cr7")
+messi <- messi %>% mutate(name = "messi")
+
+players <- rbind(cr7, messi)
+head(players)
+
+players %>% ggplot(aes(x = date, y = views, color=name)) + geom_line()
+```
+
+
+
+# 2. Clientes web API con token 50 % calif.
+
+
+
+## Vamos a utilizar la API de binance (no oficial) para obtener datos sobre la evolución del bitcoin
+He elegido esta api debido a la fama que están ganando las criptomonedas. Con esta API podemos observar la evolucion de
+las distintas monedas de las que dispone este exchange.
+Esta API tambien permite ver informacion sobre la cuenta de tu usuario. Pero ese no será el ambito de este ejercicio ya que hay que comprar y vender monedas para tener ese datos
+
+```{r}
+library(binancer)
+```
+
+# Valor del BTC
+## Evolución desde el inicio
+Vamos a observar la evolución que ha tenido el bitcoin mes a mes desde que se añadio a Binance
+```{r}
+evolution <- binance_klines('BTCUSDT', interval = '1M')
+
+evolution %>% ggplot(aes(close_time, close)) + geom_line()
+
+```
+Como podemos observar el bitcoin sigue rachas en las que aumenta su valor y otras en las lo pierde. Todo esto pasa en cuestión de pocos meses ya que bitcoin es un activo bastante volatil
+
+
+
+## Precio en los ultimos días
+Ya hemos visto que el bitcoin ha aumentado su valor considerablemente en los ultimos años pese a tener grandes caidas.
+Si comparamos el precio del bitcoin en los días 29-31 de enero:
+```{r}
+klines <- binance_klines('BTCUSDT', interval = '15m',  start_time = as.Date('2022-01-28'), end_time = as.Date('2022-01-31'))
+klines <- klines %>% mutate(day = format(close_time, format="%d"))
+klines %>% ggplot(aes(format(close_time, format='%H%M'), close, colour=day, group=day )) + geom_line()
+```
+Podemos ver que su valor ha variado en más de 2k dolares, un 5% de su valor
+
+
+
+#Volumen
+## Volumen del bitcoin en su historia
+Un dato intenresante que tambien podemos observar es el volumen de Bitcoin. Esto es la cantidad de operadores de compra-venta de una moneda en un marco de tiempo
+```{r}
+evolution %>% ggplot(aes(close_time, close))+ geom_line(aes(y = volume))
+```
+
+
+## Volumen del BTC en los últimos días
+```{r}
+klines %>% ggplot(aes(close_time, volume))+ geom_line()
+
+```
+
+
+# Patron volumen-precio
+
+## Patron volumen y precio en la historia del BTC
+El volumen podría predecir el valor del btc. Para ello vamos a comparar el volumen que hay contra el precio que tiene el BTC
+```{r}
+evolution %>% ggplot(aes(close_time, close)) + geom_line(aes(y = close)) + geom_col(aes(y = volume/100), alpha=0.2) + scale_y_continuous("Price ($)", sec.axis = sec_axis(~ . * 100, name = "Volumen"))
+```
+Como podemos observar no hay un patrón evidente entre el volumen y el precio. Si que hay algunas fechas en las que parece que lo puede predecir, pero si observamos el resto de la gráfica no parece coincidir.
+
+
+## Patron volumen y precio en la historia del BTC
+
+
+La grafica anterior representa toda la evolución del BTC y el volumen de transacciones. Pero todavía podriamos pensar que el volumen puede predecir el valor a corto plazo 
+
+```{r}
+klines %>% ggplot(aes(close_time, close)) + geom_line()
+klines %>% ggplot(aes(close_time, volume)) + geom_line()
+```
+Aparentemente no hay una relacion clara entre el volumen de las transacciones y el precio del btc
+
+
+
+Si comprobamos la posible correlación entre el volumen y el precio del btc
+```{r}
+cor(klines$close, klines$volume)
+```
+vemos que la correlación es muy baja
+
+
+Vamos a comprobar si existe alguna correlación entre alguna las variables que nos dan:
+```{r}
+library(corrplot)
+cor_klines <- klines %>% select(-open_time, -close_time, -symbol, -day) %>% cor()
+
+ cor_klines %>% corrplot(type="upper")
+
+```
+Si comprobamos la gráfica vemos como hay bastantes correlaciones, pero:
+- Los datos realcionados con el precio tienen correlación con los datos relacionados con el precio
+- Los datos relacionados con el volumen de las transacciones tiene correlacion con los datos relacionados con el volumen de las transaciones
+
+
+
+
+
+#evolution %>% ggplot(aes(close_time, close)) + geom_line(aes(y = close)) + geom_line(aes(y = volume)) + scale_y_continuous(sec_axis(~., name = "test") )
+
+
+#https://github.com/daroczig/binancer
+
+#https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT
+
+
+
+https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT
+
